@@ -2,7 +2,11 @@ import numpy as np
 from scipy import linalg
 
 
-def project_point_line_2d(p:np.ndarray, s:np.ndarray, d:np.ndarray):
+def project_point_line_2d(p: np.ndarray, s: np.ndarray, d: np.ndarray):
+    """ 
+    Project the point `p` onto the line starting at `s` 
+    with direction `d` orthogonally.
+    """
     assert linalg.norm(d) != 0
     p0, p1 = p
     s0, s1 = s

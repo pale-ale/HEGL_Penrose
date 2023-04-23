@@ -4,34 +4,33 @@ from typing import Callable
 
 
 def round_half(n:float):
+    """ Return the closest number with fractional part 1/2. """
     nabs = abs(n)
     lo, hi = round(nabs) - .5, round(nabs) + .5
     return math.copysign(hi if abs(hi-nabs) < .5 else lo, n)
 
 
 def find_closest_integral_point(p:np.ndarray):
+    """ Return the closest point with integer value only. """
     return np.array([round(x) for x in p])
 
 
 def find_closest_half_point(p:np.ndarray):
-    # print(round_half(3))
-    # exit()
+    """ Return the closest point with fractional parts of 1/2. """
     return np.array([round_half(x) for x in p])
 
 
-def iarray(a:np.array):
-    return [int(e) for e in a]
-
-
-def merge_predicate(
+def merge_sorted_predicate(
         predicate:Callable[[np.ndarray, np.ndarray], bool],
-        a:np.ndarray, b:np.ndarray, axis:int
+        a:np.ndarray, b:np.ndarray
 ):
-    """Merge two arrays according to `predicate` along `axis`."""
+    """Merge two sorted arrays according to `predicate` along `axis`."""
+    if len(a) > 0 and not predicate(a[0], a[-1]):
+        a = np.flip(a)
+    if len(b) > 0 and not predicate(b[0], b[-1]):
+        b = np.flip(b)
     i, j, imax, jmax = 0, 0, len(a), len(b)
-    resultshape = [s for s in np.shape(a)]
-    resultshape[axis] = imax + jmax
-    merged = np.zeros(tuple(resultshape))
+    merged = np.zeros(imax + jmax)
     while i < imax and j < jmax:
         ai, bj = a[i], b[j]
         if predicate(ai, bj):
@@ -44,4 +43,5 @@ def merge_predicate(
         merged[i+j:] = a[i:]
     elif j < jmax:
         merged[i+j:] = b[j:]
+    assert len(merged) == len(a) + len(b)
     return merged

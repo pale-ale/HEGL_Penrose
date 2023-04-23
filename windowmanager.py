@@ -5,6 +5,10 @@ import ctypes
 
 
 class WindowManager:
+    """
+    The WindowManager creates and manages the window, forwards events,
+    and calls the event loop a given number of times per second.
+    """
     def __init__(self, *windowargs) -> None:
         self.framerate = 30
         self.eventdict = dict()
@@ -18,15 +22,16 @@ class WindowManager:
         self.set_key_event(sdl2.keycode.SDLK_SPACE, self.pause)
 
     def set_key_event(self, key:int, callback:Callable[[sdl2.SDL_Event],None]):
-        print(f"Added event for keycode {key}.")
+        """ Set the callback for key `key` to `callback`. """
         self.eventdict[key] = callback
 
     def handle_key_event(self, event):
-        print(f"Handling key event for key {event.key.keysym.sym}.")
+        """ Call the callbacks registered for they key event `event`. """
         if event.key.keysym.sym in self.eventdict:
             self.eventdict[event.key.keysym.sym](event)
 
     def handle_events(self):
+        """ Poll events and handle them. """
         event = sdl2.events.SDL_Event()
         while sdl2.events.SDL_PollEvent(ctypes.byref(event), 1) == 1:
             match event.type:
@@ -36,6 +41,7 @@ class WindowManager:
                     self.exit()
 
     def run(self):
+        """ "Tick" the program, update frame times, call the tickmethod. """
         self.exiting = False
         while not self.exiting:
             self.handle_events()
@@ -50,8 +56,13 @@ class WindowManager:
                 self.ticks = newticks
 
     def pause(self, event):
+        """
+        Prevents the tickmethod from being called. 
+        Call pause() again to continue.
+        """
         if event.type == sdl2.SDL_KEYDOWN:
             self.paused = not self.paused
 
     def exit(self):
+        """ Quit the next time we tick again, so cleanups can finish. """
         self.exiting = True
