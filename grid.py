@@ -4,6 +4,7 @@ import sdl2.ext.ttf
 import sprite
 import math
 import ctypes
+import os
 
 
 class Grid(sprite.BaseSprite):
@@ -22,6 +23,16 @@ class Grid(sprite.BaseSprite):
         for p1, p2 in self.get_pairs():
             sdl2.SDL_SetRenderDrawColor(self.renderer, *self.color)
             sdl2.SDL_RenderDrawLine(self.renderer, *p1, *p2)
+        fontpaths = [
+            "/usr/share/fonts/opentype/fira/FiraMono-Bold.otf",
+            "C:\Windows\Fonts\Arial.ttf",
+            "/Library/Fonts/Arial.otf"
+        ]
+        self.font = None
+        for fontpath in fontpaths:
+            if os.path.exists(fontpath):
+                self.font = sdl2.ext.FontTTF(
+                    fontpath, 13, (255, 255, 255, 255))
 
     def get_pairs(self):
         """ Iterate over the (start, end) pair of each line. """
@@ -37,11 +48,11 @@ class Grid(sprite.BaseSprite):
         Create the numbers on an axis. 
         Uses the reverse transformation to get the numbers. 
         """
-        font = sdl2.ext.FontTTF(
-            "/usr/share/fonts/opentype/fira/FiraMono-Bold.otf", 13, (255, 255, 255, 255))
+        if not self.font:
+            return
         for p1, _ in self.get_pairs():
             label = ((p1[1]-self.origin[1])/self.xyscale[1])
-            surf = font.render_text(str(label))
+            surf = self.font.render_text(str(label))
             tex = sdl2.SDL_CreateTextureFromSurface(self.renderer, surf)
             w, h = ctypes.c_int(), ctypes.c_int()
             sdl2.SDL_QueryTexture(tex, None, None, w, h)

@@ -1,9 +1,6 @@
-import math
-
 import numpy as np
 import sdl2
 import sdl2.ext
-from plotfunc import plot_func
 from squaregrid import Squaregrid
 from util import find_closest_half_point, merge_sorted_predicate
 from windowmanager import WindowManager
