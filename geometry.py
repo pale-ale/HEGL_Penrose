@@ -18,7 +18,6 @@ class Line2D:
         self.dist_to_zero = dist_to_zero
         self.angle = angle
         self.direction = np.array([math.cos(angle), math.sin(angle)])
-        self.normal = np.flip(self.direction)
 
     @property
     def angle(self):
@@ -29,15 +28,27 @@ class Line2D:
     def start(self):
         return self.normal * self.dist_to_zero
 
+    @property
+    def normal(self):
+        return np.flip(self.direction) * (1,-1)
+
+    @property
+    def direction(self):
+        return self._direction
+    
+    @direction.setter
+    def direction(self, direction:np.ndarray):
+        self._direction = direction
+        self._angle = np.arctan2(*direction)
+    
     @angle.setter
     def angle(self, value):
         self._angle = value
         self.direction = np.array([math.cos(value), math.sin(value)])
-        self.normal = np.flip(self.direction) * (1,-1)
 
     def __call__(self, t: float):
         """ Evaluate the line with parameter value `t` and return the 2D point. """
-        return self.normal * self.dist_to_zero + t * self.direction
+        return self.start + t * self.direction
 
     def get_param(self, dim: int, val: float) -> float:
         """ Return a parameter whose point has value `x` in dimension `n`. """
@@ -58,9 +69,9 @@ class Line2D:
         i1, i2 = None, None
         if intersects and (c_x1 != c_x2 or c_y1 != c_y2):
             if abs(self.direction[0]) > abs(self.direction[1]):
-                i1, i2 = self.get_param(0, c_x1), self.get_param(0, c_x2)
+                i1, i2 = self.get_param(0, c_x1.value), self.get_param(0, c_x2.value)
             else:
-                i1, i2 = self.get_param(1, c_y1), self.get_param(1, c_y2)
+                i1, i2 = self.get_param(1, c_y1.value), self.get_param(1, c_y2.value)
         return i1, i2
 
     def get_int_values(self, dim: int, lo: ndarray, hi: ndarray):
@@ -73,7 +84,7 @@ class Line2D:
         outer_hi_int = np.floor(hi).astype(np.int16)
         assert np.all(outer_lo_int < outer_hi_int)
         p1, p2 = self.get_bounding_params(outer_lo_int, outer_hi_int, -10, 10)
-        if not p1:
+        if not p1 or not p2:
             return np.array(0)
         bounds = np.array([self(p1), self(p2)])
         lo_int = np.floor(np.min(bounds, axis=0)).astype(np.int16)
@@ -84,9 +95,26 @@ class Line2D:
             if np.all(lo_int <= self(param)) and np.all(self(param) <= hi_int):
                 integral_values.append(param)
         return np.array(integral_values)
+    
+    def is_parallel(self, line:"Line2D"):
+        return abs(self.angle - line.angle) <= 1e-10
+    
+    def __eq__(self, __value: "Line2D") -> bool:
+        return self.is_parallel(__value) and \
+            abs(self.dist_to_zero - __value.dist_to_zero) <= 1e-10
 
-    def draw(self, target: GeometrySurface, bottomleft, topright):
+    def draw(self, target: GeometrySurface, bottomleft, topright, color=(100,100,100,255)):
         p1, p2 = self.get_bounding_params(bottomleft, topright, -1000, 1000)
-        if p1:
-            target.draw_line_transformed(self(p1), self(p2))
-            target.draw_line_transformed(np.array([0,0]), self(0), (100,100,100,255))
+        if p1 and p2:
+            target.draw_line_transformed(self(p1), self(p2), color=color)
+
+def intersect_line2D(l1:Line2D, l2:Line2D):
+    l1sx, l1sy = l1.start
+    l1dx, l1dy = l1.direction
+    l2sx, l2sy = l2.start
+    l2dx, l2dy = l2.direction
+    if l1dx == 0 and l2dx == 0 or l1dy == 0 and l2dy == 0:
+        return None
+    if all(l1.direction == l2.direction):
+        return None
+    return l1((l2dx * (l1sy - l2sy) + l2dy * (l2sx - l1sx)) / (l1dx * l2dy - l1dy * l2dx))

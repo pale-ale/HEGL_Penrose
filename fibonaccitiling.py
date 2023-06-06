@@ -6,7 +6,8 @@ from util import find_closest_half_point, merge_sorted_predicate
 from windowmanager import WindowManager
 from projection import project_point_line_2d
 from lineprojectionview import LineProjection
-from geometry import Line2D
+from geometry import Line2D, intersect_line2D
+import math
 
 WINDOWSIZE = (800, 800)
 WINDOWCENTER = (WINDOWSIZE[0]/2, WINDOWSIZE[1]/2)
@@ -35,7 +36,7 @@ projection.origin = np.array((400, 50))
 anglerate = 0.0
 moverate = 0.0
 
-line = Line2D(0, 0)
+line = Line2D(0, 0.553574)
 
 
 def get_lattice_pts(line: Line2D, xmin, ymin, xmax, ymax):

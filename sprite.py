@@ -3,6 +3,8 @@ import sdl2
 import abc
 import numpy as np
 import sdl2.sdlgfx as gfx
+from numpy import ndarray
+from typing import Any
 from geometrysurface import GeometrySurface
 
 
@@ -16,24 +18,26 @@ class BaseSprite(GeometrySurface):
         self.renderer = sdl2.render.SDL_CreateSoftwareRenderer(self.surface)
         self.position = position
         self.xyscale = np.array([1,1])
-        self.origin = np.array([0,0])
+        self.origin = np.array(size) / 2
+        self.size = np.array(size)
 
     @abc.abstractmethod
     def draw(self, target:sdl2.ext.Renderer):
         pass
 
     def transform_point_pixel(self, p):
-        return (self.xyscale * p + self.origin).astype(np.int16)
+        x,y = (self.xyscale * (p + self.origin)).astype(np.int16)
+        return np.array([x, self.size[1] - y])
 
     def draw_line_transformed(self, start, end, color=(255,255,255,255)):
-        gfx.lineRGBA(self.renderer, *self.transform_point_pixel(start), *self.transform_point_pixel(end), *color)
+        gfx.lineRGBA(self.renderer, *self.transform_point_pixel(start), *self.transform_point_pixel(end), *color) # type: ignore
 
     def draw_dot_transformed(self, pos, radius, color=(0,255,255,255)):
-        tfpos = (self.xyscale * pos + self.origin).astype(np.int16)
+        tfpos = self.transform_point_pixel(pos)
         sdl2.SDL_SetRenderDrawBlendMode(self.renderer, sdl2.SDL_BLENDMODE_NONE)
-        gfx.filledCircleRGBA(self.renderer, *(tfpos), radius, *color)
+        gfx.filledCircleRGBA(self.renderer, *(tfpos), radius, *color) # type: ignore
 
     def draw_box_transformed(self, topleft, size, color=(255,0,255,255)):
-        tftl = (self.xyscale * topleft + self.origin).astype(np.int16)
+        tftl = self.transform_point_pixel(topleft)
         sdl2.SDL_SetRenderDrawBlendMode(self.renderer, sdl2.SDL_BLENDMODE_NONE)
-        gfx.boxRGBA(self.renderer, *(tftl), tftl[0] + size-1, tftl[1] + size-1, *color)
+        gfx.boxRGBA(self.renderer, *(tftl), tftl[0] + size-1, tftl[1] + size-1, *color) # type: ignore

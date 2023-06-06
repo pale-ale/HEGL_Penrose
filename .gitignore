@@ -1,0 +1,5 @@
+*.pyc
+*.code-workspace
+
+.vscode
+sdlstuff.py
