@@ -1,7 +1,6 @@
 import sdl2.ext
 from sprite import BaseSprite
-from numpy import ndarray, array, power, fromiter, inner, zeros
-from math import pi, e, ceil
+from numpy import ndarray, array, zeros
 from geometry import Line2D, intersect_line2D
 from mathpentagrid import MathPentagrid
 
@@ -11,18 +10,11 @@ class PerfPentagrid(BaseSprite):
 
     def __init__(self, size) -> None:
         super().__init__(size)
-        self.mathpg = MathPentagrid(array([0,.1,.2,.3,-.6], float))   
+        self.mathpg = MathPentagrid(array([.2,.1,.2,.3,-.8], float))   
         self.texture = None
-        self.xyscale = array([50,50])
+        self.xyscale = array([100,100])
         self.origin = (self.size / self.xyscale) / 2
-
-    def col(self, angle:float):
-        ''' Returns a color for a given angle, used for drawing distinguishable lines. '''
-        full_red, full_green, full_blue = 0, pi, 2*pi
-        def scalediff(f1:float,f2:float):
-            return int(255 - (abs((f1-f2))/(2*pi))*255)
-        rgb = [scalediff(angle,c) for c in [full_red, full_green, full_blue]]
-        return (*rgb, 255)
+        self.linecolors = [(255,100,0,255), (255,255,0,255), (255,0,100,255), (50,0,255,255), (50,50,50,255)]
 
     def intersect_linegroup(self, lg1:Line2D, lg1step:float, lg2:Line2D, lg2step:float, xrange, yrange):
         ''' 
@@ -70,29 +62,33 @@ class PerfPentagrid(BaseSprite):
         for intersect, r, s in intersections:
             assert self.mathpg.is_on_grid(complex(*intersect), r) and\
                 self.mathpg.is_on_grid(complex(*intersect), s)
-            self.draw_dot_transformed(intersect, 2)
+            self.draw_dot_transformed(intersect, 4, color=self.linecolors[r])
+            self.draw_dot_transformed(intersect, 2, color=self.linecolors[s])
             delta1 = zeros(5); delta1[r]=1
             delta2 = zeros(5); delta2[s]=1
             vertices = ndarray((4,2), float)
-            es = [[0,0], [1,0], [1,1], [0,1]]
+            es = [[0,0], [0,1], [1,1], [1,0]]
+            ks = self.mathpg.get_Ks(complex(*intersect))
             for i,(e1,e2) in enumerate(es):
-                ks = self.mathpg.get_Ks(complex(*intersect))
                 vertex5d = ks + e1*delta1 + e2*delta2
                 vertex2d = self.mathpg.k_times_xi(vertex5d)
                 vertices[i:,] = array([vertex2d.real, vertex2d.imag])
             for i in range(len(vertices)):
-                self.draw_line_transformed(vertices[i-1], vertices[i], (0,255,0,255))
+                self.draw_line_transformed(vertices[i-1], vertices[i], width=5, color=self.linecolors[r])
+                self.draw_line_transformed(vertices[i-1], vertices[i], width=2, color=self.linecolors[s])
+            # for v in vertices:
+            #     self.draw_text_transformed(v-[.4,.1], f"{round(v[0],1)},{round(v[1],1)}")
 
     def draw(self, target:sdl2.ext.Renderer):
         sdl2.SDL_SetRenderDrawColor(self.renderer, 0,0,0,0)
         sdl2.SDL_RenderClear(self.renderer, 0,0,0)
         linemin, linemax = -1, 1
-        linegroups = [self.mathpg.reverse_is_on_grid(j, linemin, linemax) for j in range(2)]
+        linegroups = [self.mathpg.reverse_is_on_grid(j, linemin, linemax) for j in range(5)]
         botleft = -self.size/(2*self.xyscale)
         topright = self.size/(2*self.xyscale)
-        for linegroup in linegroups:
+        for i,linegroup in enumerate(linegroups):
             for line in linegroup:
-                line.draw(self, botleft, topright, color=self.col(line.angle))
+                line.draw(self, botleft, topright, color=(*self.linecolors[i][:-1], 200))
         self.draw_penrose(linegroups)
         self.draw_dot_transformed(array([0,0]), 3, (255,0,0,255))
         self.texture = sdl2.ext.Texture(target, self.surface)

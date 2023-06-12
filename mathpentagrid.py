@@ -25,13 +25,13 @@ class MathPentagrid():
             lines.append(line)
         return lines
     
-    def get_kj(self, z:complex, j:int):
+    def get_Kj(self, z:complex, j:int):
         ''' Returns the "index" of the next integer grid line. '''
-        return ceil((z*self.xi**-j).real + self.gamma[j])
+        return ceil(round((z*self.xi**-j).real + self.gamma[j], 10))
     
     def get_Ks(self, z:complex):
         ''' Returns the "indices" of the next integer grid line for every grid. '''
-        return fromiter((self.get_kj(z, j) for j in range(5)), int, count=5)
+        return fromiter((self.get_Kj(z, j) for j in range(5)), int, count=5)
 
     def k_times_xi(self, k:ndarray):
         ''' Return `k` transformed from 5D to 2D. '''

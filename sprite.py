@@ -29,13 +29,18 @@ class BaseSprite(GeometrySurface):
         x,y = (self.xyscale * (p + self.origin)).astype(np.int16)
         return np.array([x, self.size[1] - y])
 
-    def draw_line_transformed(self, start, end, color=(255,255,255,255)):
-        gfx.lineRGBA(self.renderer, *self.transform_point_pixel(start), *self.transform_point_pixel(end), *color) # type: ignore
+    def draw_line_transformed(self, start, end, width=1, color=(255,255,255,255)):
+        gfx.thickLineRGBA(self.renderer, *self.transform_point_pixel(start), *self.transform_point_pixel(end), width, *color) # type: ignore
 
     def draw_dot_transformed(self, pos, radius, color=(0,255,255,255)):
         tfpos = self.transform_point_pixel(pos)
         sdl2.SDL_SetRenderDrawBlendMode(self.renderer, sdl2.SDL_BLENDMODE_NONE)
         gfx.filledCircleRGBA(self.renderer, *(tfpos), radius, *color) # type: ignore
+    
+    def draw_text_transformed(self, pos, text:str, color=(255,255,255,255)):
+        tfpos = self.transform_point_pixel(pos)
+        sdl2.SDL_SetRenderDrawBlendMode(self.renderer, sdl2.SDL_BLENDMODE_NONE)
+        gfx.stringRGBA(self.renderer, *(tfpos), text.encode("ascii"), *color) # type: ignore
 
     def draw_box_transformed(self, topleft, size, color=(255,0,255,255)):
         tftl = self.transform_point_pixel(topleft)
