@@ -2,6 +2,8 @@ import sdl2
 import sdl2.ext
 from typing import Callable
 import ctypes
+from sprite import BaseSprite
+import numpy as np
 
 
 class WindowManager:
@@ -21,6 +23,7 @@ class WindowManager:
         self.window.show()
         self.renderer = sdl2.ext.Renderer(self.window)
         self.set_key_event(sdl2.keycode.SDLK_SPACE, self.pause)
+        self.tickdisplay = BaseSprite((50,10))
 
     def set_key_event(self, key:int, callback:Callable[[sdl2.SDL_Event],None]):
         """ Set the callback for key `key` to `callback`. """
@@ -53,10 +56,14 @@ class WindowManager:
                 return
             self.renderer.clear((0,0,0,255))
             self.tickmethod()
+            newticks = sdl2.SDL_GetTicks()
+            frametime = newticks - self.ticks
+            sdl2.SDL_RenderClear(self.tickdisplay.renderer, 0,0,0)
+            self.tickdisplay.draw_text_transformed(np.array([3, 3]), f"{round(1000/frametime)}")
+            self.tickdisplay.draw(self.renderer)
             self.renderer.present()
             self.window.refresh()
-            newticks = sdl2.SDL_GetTicks()
-            remainingticks = int(max(self.ticks + 1000/self.framerate - newticks, 0))
+            remainingticks = int(max(1000/self.framerate - frametime, 0))
             sdl2.timer.SDL_Delay(remainingticks)
             self.ticks = newticks
 

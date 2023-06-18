@@ -1,10 +1,7 @@
 import sdl2.ext
 import sdl2
-import abc
 import numpy as np
 import sdl2.sdlgfx as gfx
-from numpy import ndarray
-from typing import Any
 from geometrysurface import GeometrySurface
 
 
@@ -21,9 +18,9 @@ class BaseSprite(GeometrySurface):
         self.origin = np.array(size) / 2
         self.size = np.array(size)
 
-    @abc.abstractmethod
     def draw(self, target:sdl2.ext.Renderer):
-        pass
+        texture = sdl2.ext.Texture(target, self.surface)
+        target.blit(texture, dstrect = sdl2.SDL_Rect(*self.position, *self.size))
 
     def transform_point_pixel(self, p):
         x,y = (self.xyscale * (p + self.origin)).astype(np.int16)
