@@ -2,6 +2,10 @@ from numpy import array, ndarray, power, fromiter, inner
 from math import e, pi, ceil
 from geometry import Line2D
 
+
+Lattice = tuple[Line2D, int, int, float, float]
+''' Represents a group of evenly spaced, parallel lines, translated orthogonally by the last float. '''
+
 class MathPentagrid():
     ''' Provides helpers for calculating a pentagrid and transforming vertices. '''
     def __init__(self, gamma:ndarray) -> None:
@@ -16,14 +20,10 @@ class MathPentagrid():
         tmp = (z * (self.xi**-j)).real + self.gamma[j]
         return abs(tmp - round(tmp, 11)) <= 1e-10
     
-    def reverse_is_on_grid(self, j:int, imin:int=-5, imax:int=5) -> list[Line2D]:
+    def reverse_is_on_grid(self, j:int, imin:int=-5, imax:int=5) -> Lattice:
         ''' Return imax-imin of parameterized parallel lines representing the jth grid. '''
-        assert 0 <= j <= 4
-        lines:list[Line2D] = []
-        for i in range(imin, imax+1):
-            line = Line2D(i - self.gamma[j], 2*pi*j/5 + pi/2)
-            lines.append(line)
-        return lines
+        line = Line2D(imin - self.gamma[j], 2*pi*j/5 + pi/2)
+        return (line, imin, imax, 1, -self.gamma[j])
     
     def get_Kj(self, z:complex, j:int):
         ''' Returns the "index" of the next integer grid line. '''

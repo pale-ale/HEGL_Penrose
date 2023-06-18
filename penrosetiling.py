@@ -1,11 +1,11 @@
 from windowmanager import WindowManager
-from perfpentagrid import PerfPentagrid
+from pentagrid import Pentagrid
 import numpy as np
 import sdl2
 
 def main():
     screensize = (1400, 800)
-    pg = PerfPentagrid(screensize)
+    pg = Pentagrid(screensize)
     wm = WindowManager("Penrose tiling", screensize)
     lattice_movement = np.zeros(5)
     speed = 1/50

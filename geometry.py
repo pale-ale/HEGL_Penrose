@@ -7,6 +7,9 @@ import scipy.linalg
 import sdl2
 import sdl2.ext
 from geometrysurface import GeometrySurface
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from mathpentagrid import Lattice
 
 class Line2D:
     """
@@ -16,8 +19,12 @@ class Line2D:
 
     def __init__(self, dist_to_zero: float, angle: float) -> None:
         self.dist_to_zero = dist_to_zero
-        self.angle = angle
-        self.direction = np.array([math.cos(angle), math.sin(angle)])
+        self._angle = angle
+        self._direction = np.array([math.cos(angle), math.sin(angle)])
+    
+    @classmethod
+    def copyconstruct(cls, line:"Line2D"):
+        return cls(line.dist_to_zero, line.angle)
 
     @property
     def angle(self):
@@ -107,6 +114,14 @@ class Line2D:
         p1, p2 = self.get_bounding_params(bottomleft, topright, -1000, 1000)
         if p1 and p2:
             target.draw_line_transformed(self(p1), self(p2), color=color)
+    
+    @staticmethod
+    def draw_lattice(target: GeometrySurface, bottomleft, topright, lattice:"Lattice", color=(100,100,100,255)):
+        line, start, stop, step, offset = lattice
+        linecpy = Line2D(line.dist_to_zero, line.angle)
+        for i in range(start, stop+1):
+            linecpy.dist_to_zero = i * step + offset
+            linecpy.draw(target, bottomleft, topright, color)
 
 def intersect_line2D(l1:Line2D, l2:Line2D):
     l1sx, l1sy = l1.start
