@@ -51,7 +51,7 @@ class Grid(sprite.BaseSprite):
         if not self.font:
             return
         for p1, _ in self.get_pairs():
-            label = ((p1[1]-self.origin[1])/self.xyscale[1])
+            label = -(p1[1] / self.xyscale[1] - self.origin[1])
             surf = self.font.render_text(str(label))
             tex = sdl2.SDL_CreateTextureFromSurface(self.renderer, surf)
             w, h = ctypes.c_int(), ctypes.c_int()

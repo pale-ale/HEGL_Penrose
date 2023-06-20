@@ -51,7 +51,7 @@ class Line2D:
     @angle.setter
     def angle(self, value):
         self._angle = value
-        self.direction = np.array([math.cos(value), math.sin(value)])
+        self.direction = np.array([math.sin(value), math.cos(value)])
 
     def __call__(self, t: float):
         """ Evaluate the line with parameter value `t` and return the 2D point. """

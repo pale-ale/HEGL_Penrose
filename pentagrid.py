@@ -1,6 +1,7 @@
 import sdl2.ext
 from sprite import BaseSprite
 from numpy import ndarray, array, zeros
+import numpy as np
 from geometry import Line2D, intersect_line2D
 from mathpentagrid import MathPentagrid, Lattice
 
@@ -39,28 +40,38 @@ class Pentagrid(BaseSprite):
         intersect2 = intersect_line2D(l1 ,l2)
         l2.dist_to_zero -= step2
         assert intersect0 is not None and intersect1 is not None and intersect2 is not None
+        lineno1 = stop1 - start1 + 1
+        lineno2 = stop2 - start2 + 1
         dintersect1 = intersect1 - intersect0
         dintersect2 = intersect2 - intersect0
-        for i in range(stop1 - start1 + 1):
-            for j in range(stop2 - start2 + 1):
-                yield intersect0 + i * dintersect1 + j * dintersect2
+        lincomb1 = np.outer(np.arange(lineno1), dintersect1)
+        lincomb2 = np.outer(np.arange(lineno2), dintersect2)
+        intersects = intersect0 + lincomb1[None,:] + lincomb2[:,None]
+        return np.reshape(intersects, (lineno1 * lineno2, 2))
 
     def get_intersections(self, lattices:list[Lattice]):
         ''' Return every intersection between the groups of evenly spaced, parallel lines. '''
-        intersections:list[tuple[ndarray, int ,int]] = []
+        latticelines = self.linemax - self.linemin +1
+        intersectioncount = latticelines**2 * 10
+        intersections = ndarray((intersectioncount, 4))
+        n = 0
         for i in range(len(lattices)):
             for j in range(len(lattices)):
                 if i >= j:
                     continue
-                for intersection in self.intersect_latices(lattices[i], lattices[j]):
-                    if intersection is not None:
-                        intersections.append((intersection, i, j))
+                latt_inter = self.intersect_latices(lattices[i], lattices[j])
+                licount = latt_inter.shape[0]
+                intersections[n : n+licount, 0:2] = latt_inter
+                intersections[n : n+licount, 2] = i
+                intersections[n : n+licount, 3] = j
+                n += licount
         return intersections
 
     def draw_penrose(self, lattices):
         ''' Draw a penrose tiling defined by `lattices`. '''
         intersections = self.get_intersections(lattices)
-        for intersect, r, s in intersections:
+        for lattice_intersection in intersections:
+            intersect, r, s = lattice_intersection[:2], *lattice_intersection[2:].astype(int)
             assert self.mathpg.is_on_grid(complex(*intersect), r) and\
                 self.mathpg.is_on_grid(complex(*intersect), s)
             self.draw_dot_transformed(intersect, 4, color=self.linecolors[r])

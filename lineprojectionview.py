@@ -25,19 +25,19 @@ class LineProjection(BaseSprite):
         sdl2.SDL_RenderClear(self.renderer)
         if not self.texture:
             return
-        self.draw_dot_transformed((0, 0), 5, (0, 0, 0, 255))
+        self.draw_dot_transformed(np.zeros(2), 5, (0, 0, 0, 255))
         for p1, p2 in self.hor_segments:
             start = self._dir_dist(p1, self.projection_center)
             end = self._dir_dist(p2, self.projection_center)
-            self.draw_line_transformed((start, 0), (end, 0), self.hcolor)
-            self.draw_dot_transformed((start, 0), 2, (255, 0, 255, 255))
-            self.draw_dot_transformed((end, 0), 2, (255, 0, 255, 255))
+            self.draw_line_transformed(np.array([start, 0]), np.array([end, 0]), color=self.hcolor)
+            self.draw_dot_transformed( np.array([start, 0]), 2, (255, 0, 255, 255))
+            self.draw_dot_transformed( np.array([end,   0]), 2, (255, 0, 255, 255))
         for p1, p2 in self.vert_segments:
             start = self._dir_dist(p1, self.projection_center)
             end = self._dir_dist(p2, self.projection_center)
-            self.draw_line_transformed((start, 0), (end, 0), self.vcolor)
-            self.draw_dot_transformed((start, 0), 2, (255, 0, 255, 255))
-            self.draw_dot_transformed((end, 0), 2, (255, 0, 255, 255))
+            self.draw_line_transformed(np.array([start, 0]), np.array([end, 0]), color=self.vcolor)
+            self.draw_dot_transformed( np.array([start, 0]), 2, (255, 0, 255, 255))
+            self.draw_dot_transformed( np.array([end,   0]), 2, (255, 0, 255, 255))
 
     def draw(self, target: sdl2.ext.Renderer):
         sdl2.SDL_RenderPresent(self.renderer)

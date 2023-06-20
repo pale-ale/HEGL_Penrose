@@ -6,8 +6,7 @@ from util import find_closest_half_point, merge_sorted_predicate
 from windowmanager import WindowManager
 from projection import project_point_line_2d
 from lineprojectionview import LineProjection
-from geometry import Line2D, intersect_line2D
-import math
+from geometry import Line2D
 
 WINDOWSIZE = (800, 800)
 WINDOWCENTER = (WINDOWSIZE[0]/2, WINDOWSIZE[1]/2)
@@ -25,13 +24,13 @@ sdl2.ext.init()
 wm = WindowManager("Fibonacchitiling", WINDOWSIZE)
 
 grid = Squaregrid(WINDOWSIZE, *GRID_SUBDIVISIONS)
-grid.origin = WINDOWCENTER
-grid.xyscale = np.array((50, -50))
+grid.xyscale = np.array((50, 50))
+grid.origin = np.array([*WINDOWCENTER]) / grid.xyscale
 grid.generate_labels()
 
 projection = LineProjection((WINDOWSIZE[0], 100), (0, WINDOWSIZE[1] - 100))
 projection.xyscale = np.array((50, 1))
-projection.origin = np.array((400, 50))
+projection.origin = np.array((400, 50)) / projection.xyscale
 
 anglerate = 0.0
 moverate = 0.0
@@ -97,9 +96,9 @@ def tickmethod():
             projection.vert_segments.append(
                 (proj_lattice_pts[i-1], proj_lattice_pts[i]))
     projection.draw_pts()
+    sdl2.SDL_RenderPresent(grid.renderer)
     grid.draw(wm.renderer)
     projection.draw(wm.renderer)
-    sdl2.SDL_RenderPresent(grid.renderer)
 
 
 def rot_cw(event):

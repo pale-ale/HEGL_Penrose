@@ -11,13 +11,13 @@ class MathPentagrid():
     def __init__(self, gamma:ndarray) -> None:
         assert abs(sum(gamma)) <= 1e-10
         self.gamma = gamma
-        self.xi = e ** (2j*pi/5)
-        self.xis = power(array([self.xi]*5), (0,1,2,3,4))
+        self.zeta = e ** (2j*pi/5)
+        self.zetas = power(array([self.zeta]*5, None), (0,1,2,3,4))
 
     def is_on_grid(self, z:complex, j:int):
         ''' Return whether `z` is part of the `j`-th grid. '''
         assert 0 <= j <= 4
-        tmp = (z * (self.xi**-j)).real + self.gamma[j]
+        tmp = (z * (self.zetas[j])).real + self.gamma[j]
         return abs(tmp - round(tmp, 11)) <= 1e-10
     
     def reverse_is_on_grid(self, j:int, imin:int=-5, imax:int=5) -> Lattice:
@@ -27,7 +27,7 @@ class MathPentagrid():
     
     def get_Kj(self, z:complex, j:int):
         ''' Returns the "index" of the next integer grid line. '''
-        return ceil(round((z*self.xi**-j).real + self.gamma[j], 10))
+        return ceil(round((z*self.zetas[-j]).real + self.gamma[j], 10))
     
     def get_Ks(self, z:complex):
         ''' Returns the "indices" of the next integer grid line for every grid. '''
@@ -35,4 +35,4 @@ class MathPentagrid():
 
     def k_times_xi(self, k:ndarray):
         ''' Return `k` transformed from 5D to 2D. '''
-        return inner(k, self.xis)
+        return inner(k, self.zetas)
