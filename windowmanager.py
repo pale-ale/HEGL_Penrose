@@ -4,6 +4,8 @@ from typing import Callable
 import ctypes
 from sprite import BaseSprite
 import numpy as np
+import os
+from PIL import Image
 
 
 class WindowManager:
@@ -24,6 +26,9 @@ class WindowManager:
         self.renderer = sdl2.ext.Renderer(self.window)
         self.set_key_event(sdl2.keycode.SDLK_SPACE, self.pause)
         self.tickdisplay = BaseSprite((50,10))
+        self.capturing = False
+        self.capturefolder = None
+        self.capturedframes:list[str] = []
 
     def set_key_event(self, key:int, callback:Callable[[sdl2.SDL_Event],None]):
         """ Set the callback for key `key` to `callback`. """
@@ -66,6 +71,10 @@ class WindowManager:
             remainingticks = int(max(1000/self.framerate - frametime, 0))
             sdl2.timer.SDL_Delay(remainingticks)
             self.ticks = newticks
+            if self.capturing and self.capturefolder is not None and self.capturetarget is not None:
+                filename = f"{len(self.capturedframes)}.bmp"
+                sdl2.SDL_SaveBMP(self.capturetarget, (self.capturefolder + filename).encode('ascii'))
+                self.capturedframes.append(filename)
 
     def pause(self, event):
         """
@@ -78,3 +87,27 @@ class WindowManager:
     def exit(self):
         """ Quit the next time we tick again, so cleanups can finish. """
         self.exiting = True
+    
+    def startcapture(self, target:sdl2.surface.SDL_Surface):
+        self.capturefolder = f"{os.curdir}{os.sep}ImageCapture{os.sep}"
+        os.makedirs(self.capturefolder, exist_ok=True)
+        self.capturing = True
+        self.capturetarget = target
+    
+    def combine_images_to_gif(self):
+        if not self.capturefolder:
+            return
+        images = [Image.open(self.capturefolder + imagefilename) for imagefilename in self.capturedframes]
+        outfilepath = self.capturefolder + "anim.gif"
+        im = Image.new('RGBA',  self.window.size, (0,0,0,255))
+        im.save(outfilepath, save_all=True, append_images=images)
+    
+    def cleanup_images(self):
+        for imagepath in self.capturedframes:
+            assert self.capturefolder is not None and imagepath.endswith(".bmp")
+            os.remove(self.capturefolder + imagepath)
+
+    def stopcapture(self):
+        self.capturing = False
+        self.combine_images_to_gif()
+        self.cleanup_images()

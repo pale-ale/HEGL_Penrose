@@ -8,8 +8,10 @@ import sdl2
 import sdl2.ext
 from geometrysurface import GeometrySurface
 from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from mathpentagrid import Lattice
+
+Lattice = tuple["Line2D", int, int, float, float]
+''' Represents a group of evenly spaced, parallel lines, translated orthogonally by the last float. '''
+
 
 class Line2D:
     """

@@ -4,13 +4,14 @@ from numpy import ndarray, array, zeros
 import numpy as np
 from geometry import Line2D, intersect_line2D
 from mathpentagrid import MathPentagrid, Lattice
+from penrosemaps import PenroseMap, NotQuitePenroseMap
 
 class Pentagrid(BaseSprite):
     ''' Draws and manages a pentagrid with its corresponding Penrose tiling. (Sort of...)'''
 
     def __init__(self, size) -> None:
         super().__init__(size)
-        self.mathpg = MathPentagrid(array([.2,.1,.2,.3,-.8], float))   
+        self.mathpg = MathPentagrid(NotQuitePenroseMap(array([.2,.1,.2,.3,-.8], float)))
         self.texture = None
         self.xyscale = array([100,100])
         self.origin = (self.size / self.xyscale) / 2
@@ -20,10 +21,6 @@ class Pentagrid(BaseSprite):
     def intersect_latices(self, lattice1:Lattice, lattice2:Lattice):
         ''' 
         Compute every intersection between two groups of evenly spaced, parallel lines.
-        ### Parameters
-        `lg1` and `lg2` represent a single line from each group.\ 
-        `lg1step` and `lg2step` are the distances between each line from the respective group.\ 
-        Use `xrange` and `yrange` to set the bounds for the linear combinations.
         '''
         l1, start1, stop1, step1, offset1 = lattice1
         l2, start2, stop2, step2, offset2 = lattice2
@@ -78,13 +75,7 @@ class Pentagrid(BaseSprite):
             self.draw_dot_transformed(intersect, 2, color=self.linecolors[s])
             delta1 = zeros(5); delta1[r]=1
             delta2 = zeros(5); delta2[s]=1
-            vertices = ndarray((4,2), float)
-            es = [[0,0], [0,1], [1,1], [1,0]]
-            ks = self.mathpg.get_Ks(complex(*intersect))
-            for i,(e1,e2) in enumerate(es):
-                vertex5d = ks + e1*delta1 + e2*delta2
-                vertex2d = self.mathpg.k_times_xi(vertex5d)
-                vertices[i:,] = array([vertex2d.real, vertex2d.imag])
+            vertices = self.mathpg.get_verts_from_intersect(complex(*intersect), r, s)
             for i in range(len(vertices)):
                 self.draw_line_transformed(vertices[i-1], vertices[i], width=5, color=self.linecolors[r])
                 self.draw_line_transformed(vertices[i-1], vertices[i], width=2, color=self.linecolors[s])
