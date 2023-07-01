@@ -28,7 +28,6 @@ class Pentagrid(BaseSprite):
         l2 = Line2D.copyconstruct(l2)
         l1.dist_to_zero = start1 * step1 + offset1
         l2.dist_to_zero = start2 * step2 + offset2
-        # add a check for parallels?
         intersect0 = intersect_line2D(l1, l2)
         l1.dist_to_zero += step1
         intersect1 = intersect_line2D(l1 ,l2)
