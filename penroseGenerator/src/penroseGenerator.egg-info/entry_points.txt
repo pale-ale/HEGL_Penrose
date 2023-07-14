@@ -1,0 +1,2 @@
+[console_scripts]
+penroseGenerator = penroseGenerator.src.penrose.penrosetiling:main

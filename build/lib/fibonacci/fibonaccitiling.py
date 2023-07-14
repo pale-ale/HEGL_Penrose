@@ -1,11 +1,11 @@
 import numpy as np
 import sdl2
 import sdl2.ext
-from squaregrid import Squaregrid
+from src.fibonacci.squaregrid import Squaregrid
 from util import find_closest_half_point, merge_sorted_predicate
 from windowmanager import WindowManager
-from projection import project_point_line_2d
-from lineprojectionview import LineProjection
+from src.fibonacci.projection import project_point_line_2d
+from src.fibonacci.lineprojectionview import LineProjection
 from geometry import Line2D
 
 WINDOWSIZE = (800, 800)

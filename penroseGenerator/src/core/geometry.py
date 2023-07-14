@@ -1,13 +1,11 @@
 import math
-from ctypes import c_float
-from numpy import ndarray
-
-import numpy as np
-import scipy.linalg
 import sdl2
 import sdl2.ext
-from geometrysurface import GeometrySurface
-from typing import TYPE_CHECKING
+
+import numpy as np
+
+from ctypes import c_float
+from penroseGenerator.src.core.geometrysurface import GeometrySurface
 
 Lattice = tuple["Line2D", int, int, float, float]
 ''' Represents a group of evenly spaced, parallel lines, translated orthogonally by the last float. '''
@@ -39,7 +37,8 @@ class Line2D:
 
     @property
     def normal(self):
-        return np.flip(self.direction) * (1,-1)
+        n = np.flip(self.direction) * (1,-1)
+        return n / np.linalg.norm(n)
 
     @property
     def direction(self):
@@ -69,7 +68,7 @@ class Line2D:
         or None if the bounding box doesnt intersect.
         """
         rect = sdl2.SDL_FRect(*lo, *(hi-lo)+1)
-        maxextent = scipy.linalg.norm(hi-lo) * 2
+        maxextent = np.linalg.norm(hi-lo) * 2
         assert maxextent > 0
         c_x1, c_y1, c_x2, c_y2 = [
             c_float(x) for x in [*self(minparam), *self(maxparam)]]
@@ -83,7 +82,7 @@ class Line2D:
                 i1, i2 = self.get_param(1, c_y1.value), self.get_param(1, c_y2.value)
         return i1, i2
 
-    def get_int_values(self, dim: int, lo: ndarray, hi: ndarray):
+    def get_int_values(self, dim: int, lo: np.ndarray, hi: np.ndarray):
         """
         Return every parameter whose point has an integral value for dimension `n`
         and lies between `lo` and `hi` component-wise inclusive.
@@ -116,6 +115,7 @@ class Line2D:
         p1, p2 = self.get_bounding_params(bottomleft, topright, -1000, 1000)
         if p1 and p2:
             target.draw_line_transformed(self(p1), self(p2), color=color)
+            target.draw_dot_transformed(self(p2), 3, color=color)
     
     @staticmethod
     def draw_lattice(target: GeometrySurface, bottomleft, topright, lattice:"Lattice", color=(100,100,100,255)):

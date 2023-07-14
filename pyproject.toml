@@ -1,0 +1,23 @@
+[project]
+name = "penroseGenerator"
+version = "1.0.0"
+description = "Generates penrose- or penrose-similar tilings interactively."
+license = {text="MIT License"}
+authors = [
+  {name = "Alexander Baucke"},
+]
+
+requires-python = ">=3.10"
+
+dependencies = [
+    "PySDL2", 
+    "pysdl2-dll",
+    "numpy",
+    "pillow",
+]
+
+[project.scripts]
+penroseGenerator = "penroseGenerator.src.penrose.penrosetiling:main"
+
+[build-system]
+requires = ["setuptools>=40.8.0"]

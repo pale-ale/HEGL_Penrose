@@ -1,0 +1,4 @@
+PySDL2
+pysdl2-dll
+numpy
+pillow

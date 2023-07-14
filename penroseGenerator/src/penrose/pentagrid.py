@@ -1,22 +1,23 @@
-import sdl2.ext
-from sprite import BaseSprite
-from numpy import ndarray, array, zeros
 import numpy as np
-from geometry import Line2D, intersect_line2D
-from mathpentagrid import MathPentagrid, Lattice
-from penrosemaps import PenroseMap, NotQuitePenroseMap
+import sdl2.ext
+from penroseGenerator.src.core.geometry import Line2D, intersect_line2D, Lattice
+from penroseGenerator.src.core.sprite import BaseSprite
+from penroseGenerator.src.penrose.mathpentagrid import MathPentagrid
+from penroseGenerator.src.penrose.penrosemaps import PenroseMap, NotQuitePenroseMap
 
 class Pentagrid(BaseSprite):
     ''' Draws and manages a pentagrid with its corresponding Penrose tiling. (Sort of...)'''
 
     def __init__(self, size) -> None:
         super().__init__(size)
-        self.mathpg = MathPentagrid(NotQuitePenroseMap(array([.2,.1,.2,.3,-.8], float)))
+        self.mathpg = MathPentagrid(PenroseMap(np.array([.0,.1,.2,.3,-.6], float)))
+        # self.mathpg = MathPentagrid(NotQuitePenroseMap(np.array([.0,.1,.2,.3,-.6], float)))
         self.texture = None
-        self.xyscale = array([100,100])
+        self.xyscale = np.array([100,100])
         self.origin = (self.size / self.xyscale) / 2
-        self.linecolors = [(255,100,0,255), (255,255,0,255), (255,0,100,255), (50,0,255,255), (50,50,50,255)]
-        self.linemin, self.linemax = -1, 1
+        self.linecolors = [(255,0,0,255), (255,255,0,255), (0,255,0,255), (0,255,255,255), (0,0,255,255)]
+        self.linemin, self.linemax = -5,5
+        self.latticemax = 5
 
     def intersect_latices(self, lattice1:Lattice, lattice2:Lattice):
         ''' 
@@ -35,7 +36,8 @@ class Pentagrid(BaseSprite):
         l2.dist_to_zero += step2
         intersect2 = intersect_line2D(l1 ,l2)
         l2.dist_to_zero -= step2
-        assert intersect0 is not None and intersect1 is not None and intersect2 is not None
+        if intersect0 is None or intersect1 is None or intersect2 is None:
+            return None
         lineno1 = stop1 - start1 + 1
         lineno2 = stop2 - start2 + 1
         dintersect1 = intersect1 - intersect0
@@ -48,15 +50,18 @@ class Pentagrid(BaseSprite):
     def get_intersections(self, lattices:list[Lattice]):
         ''' Return every intersection between the groups of evenly spaced, parallel lines. '''
         latticelines = self.linemax - self.linemin +1
-        intersectioncount = latticelines**2 * 10
-        intersections = ndarray((intersectioncount, 4))
+        latticecount = len(lattices)
+        intersectioncount = latticelines**2 * int(latticecount * (latticecount-1) / 2)
+        intersections = np.zeros((intersectioncount, 4))
         n = 0
         for i in range(len(lattices)):
             for j in range(len(lattices)):
                 if i >= j:
                     continue
                 latt_inter = self.intersect_latices(lattices[i], lattices[j])
-                licount = latt_inter.shape[0]
+                licount = latticelines ** 2
+                if latt_inter is None:
+                    continue
                 intersections[n : n+licount, 0:2] = latt_inter
                 intersections[n : n+licount, 2] = i
                 intersections[n : n+licount, 3] = j
@@ -68,12 +73,12 @@ class Pentagrid(BaseSprite):
         intersections = self.get_intersections(lattices)
         for lattice_intersection in intersections:
             intersect, r, s = lattice_intersection[:2], *lattice_intersection[2:].astype(int)
+            if r + s == 0:
+                continue
             assert self.mathpg.is_on_grid(complex(*intersect), r) and\
                 self.mathpg.is_on_grid(complex(*intersect), s)
             self.draw_dot_transformed(intersect, 4, color=self.linecolors[r])
             self.draw_dot_transformed(intersect, 2, color=self.linecolors[s])
-            delta1 = zeros(5); delta1[r]=1
-            delta2 = zeros(5); delta2[s]=1
             vertices = self.mathpg.get_verts_from_intersect(complex(*intersect), r, s)
             for i in range(len(vertices)):
                 self.draw_line_transformed(vertices[i-1], vertices[i], width=5, color=self.linecolors[r])
@@ -84,12 +89,12 @@ class Pentagrid(BaseSprite):
     def draw(self, target:sdl2.ext.Renderer):
         sdl2.SDL_SetRenderDrawColor(self.renderer, 0,0,0,0)
         sdl2.SDL_RenderClear(self.renderer, 0,0,0)
-        lattices = [self.mathpg.reverse_is_on_grid(j, self.linemin, self.linemax) for j in range(5)]
+        lattices = [self.mathpg.reverse_is_on_grid(j, self.linemin, self.linemax) for j in range(self.latticemax)]
         botleft = -self.size/(2*self.xyscale)
         topright = self.size/(2*self.xyscale)
         for i,lattice in enumerate(lattices):
             Line2D.draw_lattice(self, botleft, topright, lattice, color=(*self.linecolors[i][:-1], 200))
         self.draw_penrose(lattices)
-        self.draw_dot_transformed(array([0,0]), 3, (255,0,0,255))
+        self.draw_dot_transformed(np.array([0,0]), 3, (255,0,0,255))
         self.texture = sdl2.ext.Texture(target, self.surface)
         target.blit(self.texture)

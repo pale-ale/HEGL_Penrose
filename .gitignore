@@ -2,4 +2,5 @@
 *.code-workspace
 
 .vscode
+ImageCapture
 sdlstuff.py

@@ -1,12 +1,11 @@
-from math import e, pi
-from geometry import Lattice, Line2D
-from penrosemaps import MapBase
-from numpy import ndarray, array, zeros
+import numpy as np
+from penroseGenerator.src.core.geometry import Lattice
+from penroseGenerator.src.penrose.penrosemaps import PenroseMap
 
 class MathPentagrid():
     ''' Provides helpers for calculating a pentagrid and transforming vertices. '''
-    def __init__(self, penrosemap:MapBase) -> None:
-        assert isinstance(penrosemap, MapBase)
+    def __init__(self, penrosemap:PenroseMap) -> None:
+        assert isinstance(penrosemap, PenroseMap)
         self.penrosemap = penrosemap
 
     def is_on_grid(self, z:complex, j:int):
@@ -24,13 +23,13 @@ class MathPentagrid():
         return self.penrosemap.r5_to_r5(self.penrosemap.c_to_r5(z))
 
     def get_verts_from_intersect(self, z:complex, r:int, s:int):
-        delta1 = zeros(5); delta1[r]=1
-        delta2 = zeros(5); delta2[s]=1
-        vertices = ndarray((4,2), float)
+        delta1 = np.zeros(5, int); delta1[r]=1
+        delta2 = np.zeros(5, int); delta2[s]=1
+        vertices = np.ndarray((4,2), float)
         es = [[0,0], [0,1], [1,1], [1,0]]
         ks = self.get_Ks(z)
         for i,(e1,e2) in enumerate(es):
             vertex5d = ks + e1*delta1 + e2*delta2
             vertex2d = self.penrosemap.r5_to_c(vertex5d)
-            vertices[i:,] = array([vertex2d.real, vertex2d.imag])
+            vertices[i:,] = np.array([vertex2d.real, vertex2d.imag])
         return vertices

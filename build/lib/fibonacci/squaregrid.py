@@ -1,6 +1,6 @@
 import sdl2.ext
 import sdl2
-from grid import Grid
+from src.fibonacci.grid import Grid
 from sprite import BaseSprite
 import math
 
