@@ -1,12 +1,14 @@
-import numpy as np
+''' Draws a Fibonacci Tiling. '''
+
 import sdl2
 import sdl2.ext
-from src.fibonacci.squaregrid import Squaregrid
-from util import find_closest_half_point, merge_sorted_predicate
-from windowmanager import WindowManager
-from src.fibonacci.projection import project_point_line_2d
-from src.fibonacci.lineprojectionview import LineProjection
-from geometry import Line2D
+import numpy as np
+
+from penroseGenerator.src.core.util import find_closest_half_point, merge_sorted_predicate
+from penroseGenerator.src.core.windowmanager import WindowManager
+from penroseGenerator.src.core.geometry import Line2D, project_point_line_2d
+from penroseGenerator.src.fibonacci.squaregrid import Squaregrid
+from penroseGenerator.src.fibonacci.lineprojectionview import LineProjection
 
 WINDOWSIZE = (800, 800)
 WINDOWCENTER = (WINDOWSIZE[0]/2, WINDOWSIZE[1]/2)
@@ -19,6 +21,8 @@ SHOW_PROJECTIONS = True
 SHOW_LATTICE_POINTS = True
 SHOW_INTEGRALS = True
 
+LINE = Line2D(0, 0.553574)
+
 sdl2.ext.init()
 
 wm = WindowManager("Fibonacchitiling", WINDOWSIZE)
@@ -29,13 +33,11 @@ grid.origin = np.array([*WINDOWCENTER]) / grid.xyscale
 grid.generate_labels()
 
 projection = LineProjection((WINDOWSIZE[0], 100), (0, WINDOWSIZE[1] - 100))
-projection.xyscale = np.array((50, 1))
+projection.xyscale = np.array((100, 1))
 projection.origin = np.array((400, 50)) / projection.xyscale
 
-anglerate = 0.0
-moverate = 0.0
-
-line = Line2D(0, 0.553574)
+anglerate = 0.0  #pylint: disable=invalid-name
+moverate  = 0.0   #pylint: disable=invalid-name
 
 
 def get_lattice_pts(line: Line2D, xmin, ymin, xmax, ymax):
@@ -44,9 +46,9 @@ def get_lattice_pts(line: Line2D, xmin, ymin, xmax, ymax):
     intersecting with `line`, return the center.
     """
     assert xmin <= xmax and ymin <= ymax
-    lo, hi = np.array([xmin, ymin]), np.array([xmax, ymax])
-    x_ts = line.get_int_values(0, lo, hi)
-    y_ts = line.get_int_values(1, lo, hi)
+    lowest, highest = np.array([xmin, ymin]), np.array([xmax, ymax])
+    x_ts = line.get_int_values(0, lowest, highest)
+    y_ts = line.get_int_values(1, lowest, highest)
     for t in x_ts:
         grid.draw_dot_transformed(line(t), 4, (255, 0, 0, 255))
     for t in y_ts:
@@ -69,24 +71,24 @@ def draw_pt_proj_between(target: Squaregrid, p: np.ndarray, a: np.ndarray, b: np
 
 
 def tickmethod():
-    line.dist_to_zero += moverate * 0.05
-    line.angle += anglerate * 0.005
+    LINE.dist_to_zero += moverate * 0.05
+    LINE.angle += anglerate * 0.005
     sdl2.SDL_SetRenderDrawColor(grid.renderer, 0, 0, 0, 0)
     sdl2.SDL_RenderClear(grid.renderer)
-    minxy, maxxy = np.array([-5, -5]), np.array([5,5])
-    lpts = get_lattice_pts(line,*minxy, *maxxy)
+    minxy, maxxy = np.array([-10, -10]), np.array([10,10])
+    lpts = get_lattice_pts(LINE,*minxy, *maxxy)
     if SHOW_LATTICE_POINTS:
         for lpt in lpts:
             grid.draw_dot_transformed(lpt, 6)
-    proj_lattice_pts = [project_point_line_2d(p, line.start, line.direction) for p in lpts]
+    proj_lattice_pts = [project_point_line_2d(p, LINE.start, LINE.direction) for p in lpts]
     if SHOW_LINE:
-        line.draw(grid, minxy, maxxy)
+        LINE.draw(grid, minxy, maxxy)
     if SHOW_PROJECTIONS:
-        for i in range(len(lpts)):
-            grid.draw_line_transformed(lpts[i], proj_lattice_pts[i])
+        for i, lpt in enumerate(lpts):
+            grid.draw_line_transformed(lpt, proj_lattice_pts[i])
     projection.hor_segments.clear()
     projection.vert_segments.clear()
-    projection.projection_center = line.normal * line.dist_to_zero
+    projection.projection_center = LINE.normal * LINE.dist_to_zero
     for i, lpt in enumerate(lpts[1:], 1):
         diff = lpt - lpts[i-1]
         if diff[0] == 0:

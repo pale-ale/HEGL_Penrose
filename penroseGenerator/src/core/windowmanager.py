@@ -1,12 +1,17 @@
-import ctypes
-import numpy as np
+''' Containts the WindowManager class. '''
+
 import os
+from typing import Callable
+
+import ctypes
 import sdl2
 import sdl2.ext
-from typing import Callable
 from PIL import Image
-from penroseGenerator.src.core.sprite import BaseSprite
 
+from penroseGenerator.src.core.sprite import BaseSprite
+from penroseGenerator.src.core.controls import Controls
+
+CallbackType = Callable[[sdl2.SDL_Event], None]
 
 class WindowManager:
     """
@@ -15,20 +20,30 @@ class WindowManager:
     """
     def __init__(self, title:str, size:tuple[int,int], *windowargs) -> None:
         sdl2.ext.init()
+        fontpath = os.path.realpath(__file__ + "/../../../FreeMonoBold.ttf")
+        self.fontmanager = sdl2.ext.FontManager(fontpath)
         self.framerate = 30
-        self.eventdict = dict()
+        self.eventdict:dict[int, CallbackType] = dict()
         self.exiting = False
         self.paused = False
-        self.tickmethod:Callable[[],None]|None = None
+        self.tickmethod : "Callable[[],None]|None" = None
         self.ticks = 0
         self.window = sdl2.ext.Window(title, size, *windowargs)
         self.window.show()
         self.renderer = sdl2.ext.Renderer(self.window)
-        self.set_key_event(sdl2.keycode.SDLK_SPACE, self.pause)
-        self.tickdisplay = BaseSprite((50,10))
+        self.tickdisplay = BaseSprite((20,20), (10,10))
         self.capturing = False
         self.capturefolder = None
+        self.capturetarget = None
         self.capturedframes:list[str] = []
+        self.show_controls = True
+        controls_width = 300
+        controls_size = (controls_width, self.window.size[1])
+        controls_pos =  (self.window.size[0] - controls_width, 0)
+        self.controls = Controls(controls_size, controls_pos)
+        self.set_key_event(sdl2.keycode.SDLK_SPACE, self.pause)
+        self.set_key_event(sdl2.keycode.SDLK_h, self.toggle_controls)
+        self.controls.controls = ["Space: Pause", "h: show/hide controls"]
 
     def set_key_event(self, key:int, callback:Callable[[sdl2.SDL_Event],None]):
         """ Set the callback for key `key` to `callback`. """
@@ -62,12 +77,13 @@ class WindowManager:
             self.renderer.clear((0,0,0,255))
             self.tickmethod()
             newticks = sdl2.SDL_GetTicks()
-            frametime = newticks - self.ticks
+            frametime = max(1, newticks - self.ticks)
             sdl2.SDL_RenderClear(self.tickdisplay.renderer, 0,0,0)
-            self.tickdisplay.draw_text_transformed(np.array([3, 3]), f"{round(1000/frametime)}")
+            self.tickdisplay.surface = self.fontmanager.render(str(round(frametime)).zfill(2), size=20)
             self.tickdisplay.draw(self.renderer)
+            if self.show_controls:
+                self.controls.draw(self.renderer)
             self.renderer.present()
-            self.window.refresh()
             remainingticks = int(max(1000/self.framerate - frametime, 0))
             sdl2.timer.SDL_Delay(remainingticks)
             self.ticks = newticks
@@ -75,6 +91,7 @@ class WindowManager:
                 filename = f"{len(self.capturedframes)}.bmp"
                 sdl2.SDL_SaveBMP(self.capturetarget, (self.capturefolder + filename).encode('ascii'))
                 self.capturedframes.append(filename)
+            self.window.refresh()
 
     def pause(self, event):
         """
@@ -84,30 +101,37 @@ class WindowManager:
         if event.type == sdl2.SDL_KEYDOWN:
             self.paused = not self.paused
 
+    def toggle_controls(self, keyevent:sdl2.SDL_Event):
+        """ Display/Hide the configured callbacks on screen. """
+        if keyevent.type == sdl2.events.SDL_KEYDOWN:
+            self.show_controls = not self.show_controls
+
     def exit(self):
         """ Quit the next time we tick again, so cleanups can finish. """
         self.exiting = True
-    
+
     def startcapture(self, target:sdl2.surface.SDL_Surface):
+        """ Start taking snapshots of the window every tick. """
         self.capturefolder = f"{os.curdir}{os.sep}ImageCapture{os.sep}"
         os.makedirs(self.capturefolder, exist_ok=True)
         self.capturing = True
         self.capturetarget = target
-    
-    def combine_images_to_gif(self):
+
+    def stopcapture(self):
+        """ Stop capturing and save to ImageCapture/anim.gif. """
+        self.capturing = False
+        self._combine_images_to_gif()
+        self._cleanup_images()
+
+    def _combine_images_to_gif(self):
         if not self.capturefolder:
             return
-        images = [Image.open(self.capturefolder + imagefilename) for imagefilename in self.capturedframes]
+        images = [Image.open(self.capturefolder + filename) for filename in self.capturedframes]
         outfilepath = self.capturefolder + "anim.gif"
-        im = Image.new('RGBA',  self.window.size, (0,0,0,255))
-        im.save(outfilepath, save_all=True, append_images=images)
-    
-    def cleanup_images(self):
+        image = Image.new('RGBA',  self.window.size, (0,0,0,255))
+        image.save(outfilepath, save_all=True, append_images=images, transparency=255)
+
+    def _cleanup_images(self):
         for imagepath in self.capturedframes:
             assert self.capturefolder is not None and imagepath.endswith(".bmp")
             os.remove(self.capturefolder + imagepath)
-
-    def stopcapture(self):
-        self.capturing = False
-        self.combine_images_to_gif()
-        self.cleanup_images()

@@ -1,13 +1,17 @@
+""" Draws some lines and can perform transformations. """
+
+import os
+import math
+import ctypes
+
 import sdl2
 import sdl2.ext
 import sdl2.ext.ttf
-import sprite
-import math
-import ctypes
-import os
+
+from penroseGenerator.src.core.sprite import BaseSprite
 
 
-class Grid(sprite.BaseSprite):
+class Grid(BaseSprite):
     """
     Use this class to create evenly spaced lines
     with transformations between coordinate systems.
@@ -20,12 +24,12 @@ class Grid(sprite.BaseSprite):
         self.color = color
         self.angle = 0.0
         self.texture = None
-        for p1, p2 in self.get_pairs():
+        for part1, part2 in self.get_pairs():
             sdl2.SDL_SetRenderDrawColor(self.renderer, *self.color)
-            sdl2.SDL_RenderDrawLine(self.renderer, *p1, *p2)
+            sdl2.SDL_RenderDrawLine(self.renderer, *part1, *part2)
         fontpaths = [
             "/usr/share/fonts/opentype/fira/FiraMono-Bold.otf",
-            "C:\Windows\Fonts\Arial.ttf",
+            "C:\\Windows\\Fonts\\Arial.ttf",
             "/Library/Fonts/Arial.otf"
         ]
         self.font = None
@@ -39,8 +43,8 @@ class Grid(sprite.BaseSprite):
         xmax, ymax = self.size[0]-1, self.size[1]-1
         yield (0, 0), (xmax, 0)
         for i in range(self.subdivisions):
-            y = i*self.size[1]/self.subdivisions
-            yield (0, int(y)), (xmax, int(y))
+            ystep = i*self.size[1]/self.subdivisions
+            yield (0, int(ystep)), (xmax, int(ystep))
         yield (0, ymax), (xmax, ymax)
 
     def generate_labels(self):
@@ -50,13 +54,13 @@ class Grid(sprite.BaseSprite):
         """
         if not self.font:
             return
-        for p1, _ in self.get_pairs():
-            label = -(p1[1] / self.xyscale[1] - self.origin[1])
+        for part1, _ in self.get_pairs():
+            label = -(part1[1] / self.xyscale[1] - self.origin[1])
             surf = self.font.render_text(str(label))
             tex = sdl2.SDL_CreateTextureFromSurface(self.renderer, surf)
-            w, h = ctypes.c_int(), ctypes.c_int()
-            sdl2.SDL_QueryTexture(tex, None, None, w, h)
-            rect = sdl2.SDL_Rect(*p1, w, h)
+            width, height = ctypes.c_int(), ctypes.c_int()
+            sdl2.SDL_QueryTexture(tex, None, None, width, height)
+            rect = sdl2.SDL_Rect(*part1, width, height)
             sdl2.SDL_RenderCopy(self.renderer, tex, None, rect)
 
     def draw(self, target: sdl2.ext.Renderer):
@@ -66,4 +70,4 @@ class Grid(sprite.BaseSprite):
         dstw, dsth = target.rendertarget.size
         dstpos = (int((dstw - self.size[0])/2), int((dsth - self.size[1])/2))
         target.blit(self.texture, dstrect=(dstpos),
-                    angle=math.degrees(self.angle))
+                    angle=int(math.degrees(self.angle)))
