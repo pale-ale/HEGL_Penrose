@@ -97,7 +97,6 @@ class WindowManager:
                 filename = f"{len(self.capturedframes)}.bmp"
                 sdl2.SDL_SaveBMP(self.surface, (self.capturefolder + filename).encode('ascii'))
                 self.capturedframes.append(filename)
-                self.stopcapture()
             self.windowrenderer.blit(sdl2.ext.Texture(self.windowrenderer, self.surface))
             self.windowrenderer.present()
             self.window.refresh()

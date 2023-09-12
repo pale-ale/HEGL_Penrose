@@ -82,7 +82,7 @@ def main():
             if windowmanager.capturing:
                 windowmanager.stopcapture()
             else:
-                windowmanager.startcapture(pentagrid.surface)
+                windowmanager.startcapture()
 
     def inflate(event):
         if event.type == sdl2.events.SDL_KEYDOWN:

@@ -5,3 +5,7 @@ Summary: Generates penrose- or penrose-similar tilings interactively.
 Author: Alexander Baucke
 License: MIT License
 Requires-Python: >=3.10
+Requires-Dist: PySDL2
+Requires-Dist: pysdl2-dll
+Requires-Dist: numpy
+Requires-Dist: pillow
