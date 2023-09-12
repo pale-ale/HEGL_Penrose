@@ -67,7 +67,7 @@ class Grid(BaseSprite):
         """ Draw the grid onto the target renderer/surface. """
         if not self.texture:
             self.texture = sdl2.ext.Texture(target, self.surface)
-        dstw, dsth = target.rendertarget.size
+        dstw, dsth = target.rendertarget.contents.w, target.rendertarget.contents.h
         dstpos = (int((dstw - self.size[0])/2), int((dsth - self.size[1])/2))
         target.blit(self.texture, dstrect=(dstpos),
                     angle=int(math.degrees(self.angle)))

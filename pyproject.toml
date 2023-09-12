@@ -1,6 +1,6 @@
 [project]
 name = "penroseGenerator"
-version = "1.0.0"
+version = "1.1.0"
 description = "Generates penrose- or penrose-similar tilings interactively."
 license = {text="MIT License"}
 authors = [

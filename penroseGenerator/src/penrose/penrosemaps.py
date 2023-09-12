@@ -87,12 +87,3 @@ class PenroseMap(MapBase):
             assert abs(sum(self.c_to_r5_factor)) <= 1e-10
         if sum_r5c:
             assert abs(sum(self.r5_to_c_factor)) <= 1e-10
-
-
-class NotQuitePenroseMap(PenroseMap):
-    ''' 
-    A modified version of the PenroseMap. 
-    It will generate a degenerate version, with tiles appearing to be sorted.
-    '''
-    def c_to_r5(self, z: complex) -> ndarray:
-        return ((z*self.c_to_r5_factor).real + self.gamma).round(10)

@@ -5,15 +5,14 @@ import sdl2.ext
 from penroseGenerator.src.core.geometry import Line2D, intersect_line2d, Lattice
 from penroseGenerator.src.core.sprite import BaseSprite
 from penroseGenerator.src.penrose.mathpentagrid import MathPentagrid
-from penroseGenerator.src.penrose.penrosemaps import PenroseMap, NotQuitePenroseMap #pylint: disable=W0611
+from penroseGenerator.src.penrose.penrosemaps import PenroseMap #pylint: disable=W0611
 
 class Pentagrid(BaseSprite):
     ''' Draws and manages a pentagrid with its corresponding Penrose tiling. (Sort of...)'''
 
     def __init__(self, size) -> None:
         super().__init__(size)
-        # self.mathpg = MathPentagrid(PenroseMap(np.array([.0,.1,.2,.3,-.6], float)))
-        self.mathpg = MathPentagrid(NotQuitePenroseMap(np.array([.0,.1,.2,.3,-.6], float)))
+        self.mathpg = MathPentagrid(PenroseMap(np.array([.0,.1,.2,.3,-.6], float)))
         self.texture = None
         self.xyscale = np.array([100,100], dtype=float)
         self.origin = (self.size / self.xyscale) / 2
@@ -82,8 +81,6 @@ class Pentagrid(BaseSprite):
             intersect, r, s = lattice_intersection[:2], *lattice_intersection[2:].astype(int)
             if r + s == 0:
                 continue
-            assert self.mathpg.is_on_grid(complex(*intersect), r) and\
-                self.mathpg.is_on_grid(complex(*intersect), s)
             self.draw_dot_transformed(intersect, 4, color=self.linecolors[r])
             self.draw_dot_transformed(intersect, 2, color=self.linecolors[s])
             vertices = self.mathpg.get_verts_from_intersect(complex(*intersect), r, s)

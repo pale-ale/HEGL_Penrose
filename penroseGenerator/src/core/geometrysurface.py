@@ -10,7 +10,7 @@ class GeometrySurface(TransformSurface):
     """ Allows drawing transformed primitives. """
     @abc.abstractmethod
     def draw_line_transformed(
-        self, start: ndarray, end: ndarray, color:tuple[int,int,int,int]=(255, 255, 255, 255)
+        self, start: ndarray, end: ndarray, width: int=1, color:tuple[int,int,int,int]=(255, 255, 255, 255)
     ):
         """ Draw a line. """
 

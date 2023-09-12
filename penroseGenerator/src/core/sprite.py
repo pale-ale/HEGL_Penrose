@@ -20,7 +20,7 @@ class BaseSprite(GeometrySurface):
         self.renderer = sdl2.render.SDL_CreateSoftwareRenderer(self.surface)
         self.position = position
         self.xyscale = np.array([1,1])
-        self.origin = np.array(size) / 2
+        self.origin = np.array(size) * .5
         self.size = np.array(size)
 
     def draw(self, target:sdl2.ext.Renderer):
@@ -29,9 +29,9 @@ class BaseSprite(GeometrySurface):
         texture = sdl2.ext.Texture(target, self.surface)
         target.blit(texture, dstrect = sdl2.SDL_Rect(*self.position, *self.size))
 
-    def transform_point_pixel(self, p):
+    def transform_point_pixel(self, point):
         """ Transform a point into screen space. """
-        x,y = (self.xyscale * (p + self.origin)).astype(np.int16)
+        x,y = (self.xyscale * (point + self.origin)).astype(np.int16)
         return np.array([x, self.size[1] - y])
 
     #pylint: disable=missing-function-docstring

@@ -57,9 +57,9 @@ class Line2D:
         self._angle = np.arctan2(*direction)
 
     @angle.setter
-    def angle(self, value):
-        self._angle = value
-        self.direction = np.array([math.sin(value), math.cos(value)])
+    def angle(self, angle):
+        self._angle = angle
+        self._direction = np.array([math.cos(angle), math.sin(angle)])
 
     def __call__(self, param: float):
         """ Evaluate the line with parameter value `param` and return the 2D point. """
@@ -100,7 +100,7 @@ class Line2D:
         assert np.all(outer_lo_int < outer_hi_int)
         param1, param2 = self.get_bounding_params(outer_lo_int, outer_hi_int, -10, 10)
         if not param1 or not param2:
-            return np.array(0)
+            return np.array([0])
         bounds = np.array([self(param1), self(param2)])
         lo_int = np.floor(np.min(bounds, axis=0)).astype(np.int16)
         hi_int = np.ceil(np.max(bounds, axis=0)).astype(np.int16)
@@ -123,8 +123,9 @@ class Line2D:
         """ Draw the line to a target. """
         param1, param2 = self.get_bounding_params(bottomleft, topright, -1000, 1000)
         if param1 and param2:
-            target.draw_line_transformed(self(param1), self(param2), color=color)
-            target.draw_dot_transformed(self(param2), 3, color=color)
+            point1, point2 = self(param1), self(param2)
+            target.draw_line_transformed(point1, point2, color=color)
+            target.draw_dot_transformed(point1, 3, color=color)
 
     @staticmethod
     def draw_lattice(

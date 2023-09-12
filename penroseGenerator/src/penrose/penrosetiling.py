@@ -8,16 +8,17 @@ from penroseGenerator.src.penrose.pentagrid import Pentagrid
 def main():
     ''' Open a window and draw a Penrose tiling. '''
     screensize = (1400, 800)
-    pentagrid = Pentagrid(([int(1 * i) for i in screensize]))
+    pentagrid = Pentagrid(([int(i) for i in screensize]))
     windowmanager = WindowManager("Penrose tiling", screensize)
     gamma_movement = np.zeros(5)
-    zeta_movement = np.zeros(5)
+    zeta_movement = np.ones(5, dtype=complex)
     camera_movement = np.zeros(2)
     speed = 1/50
 
     def tickmethod():
         pentagrid.mathpg.penrosemap.gamma += gamma_movement
-        pentagrid.mathpg.penrosemap.c_to_r5_factor += zeta_movement
+        pentagrid.mathpg.penrosemap.gamma %= 1
+        pentagrid.mathpg.penrosemap.c_to_r5_factor *= zeta_movement
         pentagrid.origin += camera_movement
         pentagrid.draw(windowmanager.renderer)
 
@@ -51,13 +52,15 @@ def main():
             sdl2.keycode.SDLK_t,
         ]
         if keyevent.type == sdl2.events.SDL_KEYDOWN:
-            arr = np.array([(speed if keyevent.key.keysym.sym == keycode else 0.0) for keycode in keycodes])
-            if keyevent.key.keysym.mod & sdl2.keycode.SDLK_LSHIFT:
-                zeta_movement = -arr
-            else:
-                zeta_movement = arr
+            direction = -1 if keyevent.key.keysym.mod & sdl2.keycode.SDLK_LSHIFT else 1
+            zeta_movement = np.array(
+                [
+                    (np.e ** (direction * 1j * np.pi * speed/4) if keyevent.key.keysym.sym == keycode else 1.0) 
+                    for keycode in keycodes
+                ]
+            )
         else:
-            zeta_movement = np.zeros(5)
+            zeta_movement = np.ones(5, dtype=complex)
 
     def change_camera_movement(keyevent:sdl2.SDL_Event):
         nonlocal camera_movement

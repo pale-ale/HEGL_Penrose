@@ -3,6 +3,7 @@
 import sdl2
 import sdl2.ext
 import numpy as np
+from scipy.constants import golden_ratio
 
 from penroseGenerator.src.core.util import find_closest_half_point, merge_sorted_predicate
 from penroseGenerator.src.core.windowmanager import WindowManager
@@ -10,31 +11,30 @@ from penroseGenerator.src.core.geometry import Line2D, project_point_line_2d
 from penroseGenerator.src.fibonacci.squaregrid import Squaregrid
 from penroseGenerator.src.fibonacci.lineprojectionview import LineProjection
 
-WINDOWSIZE = (800, 800)
+WINDOWSIZE = (300, 300)
 WINDOWCENTER = (WINDOWSIZE[0]/2, WINDOWSIZE[1]/2)
-GRID_SUBDIVISIONS = (16, 16)
+GRID_SUBDIVISIONS = (6, 6)
 
 # Show/Hide visuals
 SHOW_LINE = True
-SHOW_HALFWAYS = True
+SHOW_HALFWAYS = False
 SHOW_PROJECTIONS = True
 SHOW_LATTICE_POINTS = True
-SHOW_INTEGRALS = True
+SHOW_INTEGRALS = False
 
-LINE = Line2D(0, 0.553574)
-
+LINE = Line2D(0, 1/golden_ratio)
 sdl2.ext.init()
 
-wm = WindowManager("Fibonacchitiling", WINDOWSIZE)
+windowmanager = WindowManager("Fibonacchitiling", WINDOWSIZE)
 
 grid = Squaregrid(WINDOWSIZE, *GRID_SUBDIVISIONS)
-grid.xyscale = np.array((50, 50))
+grid.xyscale = np.array((WINDOWSIZE[0] / GRID_SUBDIVISIONS[0], WINDOWSIZE[1] / GRID_SUBDIVISIONS[1]))
 grid.origin = np.array([*WINDOWCENTER]) / grid.xyscale
 grid.generate_labels()
 
-projection = LineProjection((WINDOWSIZE[0], 100), (0, WINDOWSIZE[1] - 100))
-projection.xyscale = np.array((100, 1))
-projection.origin = np.array((400, 50)) / projection.xyscale
+projection = LineProjection((WINDOWSIZE[0], 50), (0, WINDOWSIZE[1] - 50))
+projection.xyscale = grid.xyscale
+projection.origin = np.array((WINDOWCENTER[0], 25)) / projection.xyscale
 
 anglerate = 0.0  #pylint: disable=invalid-name
 moverate  = 0.0   #pylint: disable=invalid-name
@@ -49,10 +49,12 @@ def get_lattice_pts(line: Line2D, xmin, ymin, xmax, ymax):
     lowest, highest = np.array([xmin, ymin]), np.array([xmax, ymax])
     x_ts = line.get_int_values(0, lowest, highest)
     y_ts = line.get_int_values(1, lowest, highest)
-    for t in x_ts:
-        grid.draw_dot_transformed(line(t), 4, (255, 0, 0, 255))
-    for t in y_ts:
-        grid.draw_dot_transformed(line(t), 4, (0, 255, 0, 255))
+    # print(x_ts, y_ts); exit()
+    if SHOW_INTEGRALS:
+        for t in x_ts:
+            grid.draw_dot_transformed(line(t), 4, (255, 0, 0, 255))
+        for t in y_ts:
+            grid.draw_dot_transformed(line(t), 4, (0, 255, 0, 255))
     ts = merge_sorted_predicate(lambda a, b: a < b, x_ts, y_ts)
     pts = np.array([line(t) for t in ts])
     lpts = np.zeros((len(pts)-1, 2))
@@ -76,7 +78,7 @@ def tickmethod():
     sdl2.SDL_SetRenderDrawColor(grid.renderer, 0, 0, 0, 0)
     sdl2.SDL_RenderClear(grid.renderer)
     minxy, maxxy = np.array([-10, -10]), np.array([10,10])
-    lpts = get_lattice_pts(LINE,*minxy, *maxxy)
+    lpts = get_lattice_pts(LINE, *minxy, *maxxy)
     if SHOW_LATTICE_POINTS:
         for lpt in lpts:
             grid.draw_dot_transformed(lpt, 6)
@@ -86,6 +88,7 @@ def tickmethod():
     if SHOW_PROJECTIONS:
         for i, lpt in enumerate(lpts):
             grid.draw_line_transformed(lpt, proj_lattice_pts[i])
+            grid.draw_dot_transformed(proj_lattice_pts[i], 2, (255,255,255,255))
     projection.hor_segments.clear()
     projection.vert_segments.clear()
     projection.projection_center = LINE.normal * LINE.dist_to_zero
@@ -99,8 +102,8 @@ def tickmethod():
                 (proj_lattice_pts[i-1], proj_lattice_pts[i]))
     projection.draw_pts()
     sdl2.SDL_RenderPresent(grid.renderer)
-    grid.draw(wm.renderer)
-    projection.draw(wm.renderer)
+    grid.draw(windowmanager.renderer)
+    projection.draw(windowmanager.renderer)
 
 
 def rot_cw(event):
@@ -134,10 +137,17 @@ def move_orth_bwd(event):
         return
     moverate = 0.0
 
+def start_stop_capture(event:sdl2.SDL_Event):
+    if event.type == sdl2.events.SDL_KEYDOWN:
+        if windowmanager.capturing:
+            windowmanager.stopcapture()
+        else:
+            windowmanager.startcapture()
 
-wm.tickmethod = tickmethod
-wm.set_key_event(sdl2.keycode.SDLK_LEFT, rot_ccw)
-wm.set_key_event(sdl2.keycode.SDLK_RIGHT, rot_cw)
-wm.set_key_event(sdl2.keycode.SDLK_DOWN, move_orth_fwd)
-wm.set_key_event(sdl2.keycode.SDLK_UP, move_orth_bwd)
-wm.run()
+windowmanager.tickmethod = tickmethod
+windowmanager.set_key_event(sdl2.keycode.SDLK_LEFT, rot_ccw)
+windowmanager.set_key_event(sdl2.keycode.SDLK_RIGHT, rot_cw)
+windowmanager.set_key_event(sdl2.keycode.SDLK_DOWN, move_orth_fwd)
+windowmanager.set_key_event(sdl2.keycode.SDLK_UP, move_orth_bwd)
+windowmanager.set_key_event(sdl2.keycode.SDLK_RETURN, start_stop_capture)
+windowmanager.run()

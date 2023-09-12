@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: penroseGenerator
-Version: 1.0.0
+Version: 1.1.0
 Summary: Generates penrose- or penrose-similar tilings interactively.
 Author: Alexander Baucke
 License: MIT License

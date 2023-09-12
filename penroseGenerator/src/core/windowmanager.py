@@ -30,7 +30,13 @@ class WindowManager:
         self.ticks = 0
         self.window = sdl2.ext.Window(title, size, *windowargs)
         self.window.show()
-        self.renderer = sdl2.ext.Renderer(self.window)
+        self.surface = sdl2.SDL_CreateRGBSurface(0, *size, 32,
+                                   0xff000000,  # r mask
+                                   0x00ff0000,  # g mask
+                                   0x0000ff00,  # b mask
+                                   0x000000ff)  # a mask
+        self.renderer = sdl2.ext.Renderer(self.surface)
+        self.windowrenderer = sdl2.ext.Renderer(self.window)
         self.tickdisplay = BaseSprite((20,20), (10,10))
         self.capturing = False
         self.capturefolder = None
@@ -87,10 +93,13 @@ class WindowManager:
             remainingticks = int(max(1000/self.framerate - frametime, 0))
             sdl2.timer.SDL_Delay(remainingticks)
             self.ticks = newticks
-            if self.capturing and self.capturefolder is not None and self.capturetarget is not None:
+            if self.capturing and self.capturefolder is not None:
                 filename = f"{len(self.capturedframes)}.bmp"
-                sdl2.SDL_SaveBMP(self.capturetarget, (self.capturefolder + filename).encode('ascii'))
+                sdl2.SDL_SaveBMP(self.surface, (self.capturefolder + filename).encode('ascii'))
                 self.capturedframes.append(filename)
+                self.stopcapture()
+            self.windowrenderer.blit(sdl2.ext.Texture(self.windowrenderer, self.surface))
+            self.windowrenderer.present()
             self.window.refresh()
 
     def pause(self, event):
@@ -110,12 +119,11 @@ class WindowManager:
         """ Quit the next time we tick again, so cleanups can finish. """
         self.exiting = True
 
-    def startcapture(self, target:sdl2.surface.SDL_Surface):
+    def startcapture(self):
         """ Start taking snapshots of the window every tick. """
         self.capturefolder = f"{os.curdir}{os.sep}ImageCapture{os.sep}"
         os.makedirs(self.capturefolder, exist_ok=True)
         self.capturing = True
-        self.capturetarget = target
 
     def stopcapture(self):
         """ Stop capturing and save to ImageCapture/anim.gif. """
@@ -135,3 +143,4 @@ class WindowManager:
         for imagepath in self.capturedframes:
             assert self.capturefolder is not None and imagepath.endswith(".bmp")
             os.remove(self.capturefolder + imagepath)
+        self.capturedframes.clear()
