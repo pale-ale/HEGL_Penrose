@@ -79,7 +79,7 @@ class WindowManager:
         while not self.exiting:
             self.handle_events()
             if self.paused:
-                return
+                continue
             self.renderer.clear((0,0,0,255))
             self.tickmethod()
             newticks = sdl2.SDL_GetTicks()
